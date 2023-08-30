@@ -9,6 +9,7 @@ project(merge_map)
 ## is used, also find other catkin packages
 
 find_package(OpenCV 4 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -17,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   nav_msgs
 )
-
+#include_directories("/usr/include/eigen3")
 message(STATUS "OpenCV library status:")
 message(STATUS "version: ${OpenCV_VERSION}")
 
@@ -127,6 +128,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -160,7 +162,7 @@ include_directories(
 # )
 
 add_executable(merge_map src/main.cpp)
-target_link_libraries(merge_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(merge_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES})
 
 target_sources(merge_map PRIVATE
         ./src/processor.cpp
