@@ -14,7 +14,7 @@ typedef struct
 
 four_corners_t corners;
 
-Processor::Processor(ros::NodeHandle nh_, std::string topic_loc_, std::string topic_map_, bool IShead)
+Processor::Processor(ros::NodeHandle nh_, std::string topic_loc_, std::string topic_map_, std::string IShead)
 {
     topic_loc = topic_loc_;
     topic_map = topic_map_;
@@ -107,11 +107,11 @@ void Processor::mergecallback(const nav_msgs::Odometry::ConstPtr& loc, const nav
 //    cv::flip(img, img_f, 0);
 
     // 判断是否为头车，若为头车建立大图，最后将以头车的其实位置为坐标原点
-    if(IShead)
+    if(std::stoi(IShead))
     {
         start_center = build_newMap(loc,img);     // 初始点在图像中的位置。
         IShead = false;
-        ROS_DEBUG_STREAM("起始点x=" << this->start_center.x << "起始点y=" << this->start_center.y);
+        ROS_INFO_STREAM("起始点x=" << this->start_center.x << "起始点y=" << this->start_center.y);
 
         // 下面需要跳出该次回调
         // TODO
@@ -121,8 +121,24 @@ void Processor::mergecallback(const nav_msgs::Odometry::ConstPtr& loc, const nav
     // 判断是否存在大图
     if(XL_map_ptr)
     {
-        x_ = (int)(loc->pose.pose.position.x+start_center.x-map->info.width/2.0);
-        y_ = (int)(loc->pose.pose.position.y+start_center.y-map->info.height/2.0);
+        x_loc = loc->pose.pose.position.x+start_center.x;
+        y_loc = loc->pose.pose.position.y+start_center.y;
+
+        x_ = (int)(x_loc-map->info.width/2.0);
+        y_ = (int)(y_loc-map->info.height/2.0);
+
+        if(x_<0)
+            x_ = 0;
+        if(y_<0)
+            y_ = 0;
+
+
+//                cv::copyMakeBorder(*XL_map_ptr, *XL_map_ptr, 0, 0, -x_, 0, cv::BORDER_REPLICATE);
+//                start_center.x = start_center.x - x_;
+
+//            ROS_DEBUG_STREAM("更新起始点x=" << this->start_center.x << "更新起始点y=" << this->start_center.y);
+
+
         cv::Mat imageRIO = (*XL_map_ptr)(cv::Rect(x_, y_, map->info.width, map->info.height));
         merge(imageRIO,img);
     }
@@ -183,8 +199,15 @@ bool Processor::merge(const cv::Mat& image1, const cv::Mat& image2)
     warpPerspective(image2, imageTransform2, transMat, cv::Size(MAX(corners.right_top.x, corners.right_bottom.x), MAX(corners.left_bottom.y, corners.right_bottom.y)));
 
     // 将大图扩充
+    // TODO
+    if((x_loc-imageTransform2.cols) < 0 || (y_loc-imageTransform2.rows) < 0)
+    {
+        if((x_loc-imageTransform2.cols) < 0)
+        {
+            cv::copyMakeBorder(*XL_map_ptr, *XL_map_ptr, 0, 0, imageTransform2.cols-x_loc, 0, cv::BORDER_REPLICATE);
+        }
 
-
+    }
 
     imageTransform2.copyTo((*XL_map_ptr)(cv::Rect(x_, y_, imageTransform2.cols, imageTransform2.rows)));
 //    image02.copyTo(dst(Rect(0, 0, image02.cols, image02.rows)));

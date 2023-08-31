@@ -21,17 +21,17 @@
 class Processor
 {
 private:
-    int x_,y_;
+    int x_,y_, x_loc,y_loc;
     std::string topic_loc;
     std::string topic_map;
     ros::NodeHandle nh;
-    bool IShead;
+    std::string IShead;
 
     static cv::Point2f start_center;
     static cv::Mat* XL_map_ptr;
 
 public:
-    Processor(ros::NodeHandle nh_, std::string topic_loc_, std::string topic_map_, bool IShead=false);
+    Processor(ros::NodeHandle nh_, std::string topic_loc_, std::string topic_map_, std::string IShead);
     void topicSubscribing();     // 同时订阅位置话题，和栅格地图话题
     void mergecallback(const nav_msgs::Odometry::ConstPtr& loc,const nav_msgs::OccupancyGrid::ConstPtr& map);       //
     void CalcCorners(const cv::Mat& H, const cv::Mat& src);
